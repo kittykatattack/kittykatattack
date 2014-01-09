@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Monster Mayhem</title>
+<link rel="stylesheet" href="../../../styles/style_kittykatattack.css">
+
+<!-- The canvas -->
+<canvas width="704" height="512"></canvas>
+<h2>Monster Mayhem</h2>
+<p>2 level tile-based scrolling maze game engine with interactive AI.
+<br>Collect all the stars without being eaten. (Keyboard arrow keys)
+<br>Click for fullscreen (esc to exit.)</p>
+
+<!-- The game code -->
+<script src="../src/objects.js"></script>
+<script src="../src/collision.js"></script>
+<script src="../src/monsterMayhem.js"></script>
+
+<script>
+var canvas = document.querySelector("canvas"); 
+canvas.addEventListener("mousedown", function()
+{
+  if (canvas.requestFullscreen) 
+    { // W3C API
+        canvas.requestFullscreen();
+    } 
+    else if (canvas.mozRequestFullScreen) 
+    { // Mozilla current API
+        canvas.mozRequestFullScreen();
+    } 
+    else if (canvas.webkitRequestFullScreen) 
+    { // Webkit current API
+        canvas.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+    }
+}, false);
+</script>

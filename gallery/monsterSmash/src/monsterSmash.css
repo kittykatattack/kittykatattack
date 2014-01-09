@@ -1,0 +1,50 @@
+*
+{
+  padding: 0px;
+  margin: 0px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+body
+{
+  padding-top: 50px;
+}
+
+#stage 
+{
+  position: relative;
+  width: 552px;
+  height: 414px;
+  margin: auto;
+  background-color: black;
+}
+
+canvas
+{
+  display: block;
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  margin-top: 0px;
+	
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	
+	cursor: pointer;	
+}
+
+@font-face 
+{
+  font-family: Vanilla;
+  src: url("../fonts/Vanilla.ttf");
+}
+
+p
+{
+  font-family: Vanilla;
+  font-size: 20px;
+  padding: 20px;
+}

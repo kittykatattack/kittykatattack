@@ -1,0 +1,34 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Killer Bee Pandemonium - Mouse Controlled</title>
+<link rel="stylesheet" href="../../../styles/style_kittykatattack.css">
+
+<!-- The canvas -->
+<canvas width="1024" height="768"></canvas>
+<h2>Killer Bee Pandemonium</h2>
+<p>360 Shooter. (Mouse)
+<br>Click for fullscreen (esc to exit)</p>
+
+<!-- The game code -->
+<script src="../src/objects.js"></script>
+<script src="../src/collision.js"></script>
+<script src="../src/killerBeeMouse.js"></script>
+
+<script>
+var canvas = document.querySelector("canvas"); 
+canvas.addEventListener("mousedown", function()
+{
+  if (canvas.requestFullscreen) 
+    { // W3C API
+        canvas.requestFullscreen();
+    } 
+    else if (canvas.mozRequestFullScreen) 
+    { // Mozilla current API
+        canvas.mozRequestFullScreen();
+    } 
+    else if (canvas.webkitRequestFullScreen) 
+    { // Webkit current API
+        canvas.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+    }
+}, false);
+</script>

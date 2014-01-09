@@ -1,0 +1,754 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Kittykatattack!</title>
+<link rel="stylesheet" href="../../styles/style_kittykatattack.css">
+
+<canvas width="960" height="576" id="canvas" style="border: 1px dashed black"></canvas>
+<h2>Kittykatattack!</h2>
+<p>Physics-based platform game engine. (Mouse to move, click to jump.)</p>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script src="Box2dWeb-2.1.a.3.min.js"></script>
+<script src="spriteObjects.js"></script>
+<script src="mouseControl.js"></script>
+
+<script>
+var game = game || {};
+game.main = (function(){
+
+//Dependencies
+var b2Vec2 = Box2D.Common.Math.b2Vec2,
+		b2BodyDef = Box2D.Dynamics.b2BodyDef,
+		b2Body = Box2D.Dynamics.b2Body,
+		b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+		b2Fixture = Box2D.Dynamics.b2Fixture,
+		b2World = Box2D.Dynamics.b2World,
+		b2MassData = Box2D.Collision.Shapes.b2MassData,
+		b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+		b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
+		b2DebugDraw = Box2D.Dynamics.b2DebugDraw,
+		b2RevoluteJointDef=Box2D.Dynamics.Joints.b2RevoluteJointDef,
+		b2WeldJointDef = Box2D.Dynamics.Joints.b2WeldJointDef,
+		b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef,
+		b2DistanceJointDef = Box2D.Dynamics.Joints.b2DistanceJointDef,
+		b2AABB = Box2D.Collision.b2AABB;
+		
+//The canvas
+var debugCanvas = document.querySelector("#debug");
+		canvas = document.querySelector("#canvas"),
+		context = canvas.getContext("2d");
+
+//Output for testing
+var output = document.querySelector("#output");
+
+//Arrays to store the things we need to access
+var assetsToLoad = [];
+var scenerySprites = [];
+
+//Create the world
+//Gravity is 10 m/s/s, true lets the objects sleep if they aren't moving
+//var world = new b2World(new b2Vec2(0, 10), true);
+var world = new b2World(new b2Vec2(0, 30), true);
+
+//The world scale
+var SCALE = 30;
+
+//Set up a contact listener 
+var listener = new Box2D.Dynamics.b2ContactListener;
+var footContacts = 1;
+var jumpTimeout = 0;
+var collision = false;
+		
+//The game map
+var map = 
+[
+  [12,13,11,12,13,11,12,13,11,11,11,11,11,12,13],
+  [11,11,11,11,11,11,11,11,12,13,11,12,13,11,11],
+  [13,11,12,13,11,11,12,13,11,11,11,11,11,12,13],
+  [11,11,11,11,12,13,11,11,12,13,11,11,11,11,11],
+  [12,13,11,11,11,11,11,11,11,11,11,12,13,11,11],
+  [11,11,11,12,13,11,11,11,12,13,11,11,11,12,13],
+  [11,11,11,11,11,11,11,11,11,11,11,11,11,11,11],
+  [11,11,11,11,11,11,11,11,11,11,11,11,11,11,11],
+  [8,8,8,8,8,8,8,8,8,8,8,8,8,8,8]
+];
+		
+//The game objects map
+var gameObjects =
+[
+  [0,0,0,0,0,0,0,0,1,0,6,0,0,0,0],
+  [0,0,0,0,0,0,6,6,6,0,6,0,4,0,0],
+  [6,0,0,0,0,6,0,0,0,0,0,0,9,0,0],
+  [0,0,0,6,6,6,0,0,0,0,0,0,14,5,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,14,14,0],
+  [0,0,6,0,0,0,0,0,0,0,0,0,19,14,0],
+  [0,0,0,0,0,16,0,0,0,0,0,0,15,10,0],
+  [6,0,0,0,0,0,0,0,0,0,0,0,10,24,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,14,15,0]
+];
+		
+//Map code
+var EMPTY = 0;
+var CAT = 1;
+var PLATFORM = 6;
+var BALL = 16;
+var K = 4;
+var I = 9;
+var T = 14;
+var Y = 19;
+var C = 24;
+var A = 5;
+var A_LOWER = 10;
+var K_LOWER = 15
+
+//The size of each tile cell
+var SIZE = 64;
+
+//Sprites we need to access by name
+var cat = null;
+
+//The number of rows and columns
+var ROWS = map.length;
+var COLUMNS = map[0].length;
+
+//The number of columns on the tilesheet
+var tilesheetColumns = 5;
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "platforms.png";
+assetsToLoad.push(image);
+
+//Variable to count the number of assets the game needs to load
+var assetsLoaded = 0;
+
+//Game states
+var LOADING = 0;
+var BUILD_MAP = 1;
+var PLAYING = 2;
+var OVER = 3;
+var gameState = LOADING;
+
+//Game variables
+var currentBody = null;
+var bodyFound = false;
+var launchAngle = 0;
+var power = 0;
+
+update();
+
+//The listener will be fired when contact begins
+listener.BeginContact = function(contact, impulse) 
+{ 
+	if(contact.GetFixtureA().GetUserData() === "foot")
+	{
+	  footContacts++;
+	}
+	if(contact.GetFixtureB().GetUserData() === "foot")
+	{
+	  footContacts++;
+	}
+}
+
+listener.EndContact = function(contact, impulse) 
+{ 
+	if(contact.GetFixtureA().GetUserData() === "foot")
+	{
+	  footContacts--;
+	}
+	if(contact.GetFixtureB().GetUserData() === "foot")
+	{
+	  footContacts--;
+	}	
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    //Remove the load event listener from the image and sounds
+    image.removeEventListener("load", loadHandler, false);
+    
+    //Start the game 
+    gameState = BUILD_MAP;
+  }
+}
+		
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+      
+    case BUILD_MAP:
+      buildMap(map);
+      buildMap(gameObjects);
+			buildScreenBoundaries();
+      createOtherObjects();
+      gameState = PLAYING;
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+    
+    case OVER:
+      endGame();
+  }
+  
+  //Render the game
+  render();
+}
+		
+function buildMap(levelMap)
+{ 
+  for(var row = 0; row < ROWS; row++) 
+  {	
+    for(var column = 0; column < COLUMNS; column++) 
+    { 
+      var currentTile = levelMap[row][column];
+    
+      if(currentTile !== EMPTY)
+      {
+        //Find the tile's x and y position on the tile sheet
+        var tilesheetX = Math.floor((currentTile - 1) % tilesheetColumns) * SIZE; 
+        var tilesheetY = Math.floor((currentTile - 1) / tilesheetColumns) * SIZE;
+				
+				//Position the box2D bodies from their center points
+				var bodySize = SIZE / SCALE
+        var bodyPositionX = (column * bodySize) + bodySize / 2; 
+				var bodyPositionY = (row * bodySize) + bodySize / 2; 
+				var randomXOffset = (Math.random() * bodySize / 4) - bodySize / 8;
+						
+        switch (currentTile)
+        {
+          case CAT:
+            cat = Object.create(game.spriteObject);
+            cat.initialize
+						({
+							Box2D: Box2D, world: world, shape: "jumpingObject", x: bodyPositionX, y: bodyPositionY, 
+							width: (SIZE-2) / SCALE, height: (SIZE-2) / SCALE, angle: 0,
+							bodyType: "dynamic", density: 200, friction: 0, restitution: 0,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});
+					  //Prevent the cat from rotating	
+	          cat.body.SetFixedRotation(true);
+            break;
+            
+          case PLATFORM:
+            var platform = Object.create(game.spriteObject);
+            platform.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "static", density: 10, friction: 0.2, restitution: 0.4,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+          
+          case BALL:
+            var ball = Object.create(game.spriteObject);
+            ball.initialize
+						({
+							Box2D: Box2D, world: world, shape: "circle", x: bodyPositionX, y: bodyPositionY, 
+							radius: (SIZE - 2) / 2 / SCALE, angle: 0,
+							bodyType: "dynamic", density: 60, friction: 0.5, restitution: 0.4,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});
+            break;  
+			
+		      case K:
+            var letter = Object.create(game.spriteObject);
+            letter.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX + randomXOffset, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "dynamic", density: 8, friction: 0.5, restitution: 0.3,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+		
+	        case I:
+            var letter = Object.create(game.spriteObject);
+            letter.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX + randomXOffset, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "dynamic", density: 8, friction: 0.5, restitution: 0.3,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+		
+	        case T:
+            var letter = Object.create(game.spriteObject);
+            letter.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX + randomXOffset, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "dynamic", density: 8, friction: 0.5, restitution: 0.3,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+	        case Y:
+            var letter = Object.create(game.spriteObject);
+            letter.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX + randomXOffset, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "dynamic", density: 8, friction: 0.5, restitution: 0.3,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+	        case C:
+            var letter = Object.create(game.spriteObject);
+            letter.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX + randomXOffset, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "dynamic", density: 8, friction: 0.5, restitution: 0.3,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+	        case A:
+            var letter = Object.create(game.spriteObject);
+            letter.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX + randomXOffset, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "dynamic", density: 8, friction: 0.5, restitution: 0.3,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+		
+	        case A_LOWER:
+            var letter = Object.create(game.spriteObject);
+            letter.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX + randomXOffset, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "dynamic", density: 8, friction: 0.5, restitution: 0.3,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+		
+					case K_LOWER:
+            var letter = Object.create(game.spriteObject);
+            letter.initialize
+						({
+							Box2D: Box2D, world: world, shape: "box", x: bodyPositionX + randomXOffset, y: bodyPositionY, 
+							width: SIZE / SCALE, height: SIZE / SCALE, angle: 0,
+							bodyType: "dynamic", density: 8, friction: 0.5, restitution: 0.3,
+							sourceX: tilesheetX, sourceY: tilesheetY
+						});	
+            break;
+		
+          default:
+            var sprite = Object.create(game.scenerySpriteObject);
+            sprite.sourceX = tilesheetX;
+            sprite.sourceY = tilesheetY;
+            sprite.x = column * SIZE;
+            sprite.y = row * SIZE;
+            scenerySprites.push(sprite);
+        }
+      }
+    }
+  }
+}
+
+function buildScreenBoundaries()
+{
+  var top = Object.create(game.spriteObject);
+  top.initialize
+  ({
+    Box2D: Box2D, world: world, shape: "edge", startX: 0, startY: -20, 
+		endX: canvas.width / SCALE, endY: -20, color: "rgba(255, 255, 255, 0)",
+	  bodyType: "static", density: 10, friction: 0.5, restitution: 0.4
+  });
+		
+	var bottom = Object.create(game.spriteObject);
+  bottom.initialize
+  ({
+    Box2D: Box2D, world: world, shape: "edge", startX: 0, startY: canvas.height / SCALE, 
+		endX: canvas.width / SCALE, endY: canvas.height / SCALE, color: "rgba(255, 255, 255, 0)",
+	  bodyType: "static", density: 10, friction: 0.5, restitution: 0.4
+  });
+  
+	var left = Object.create(game.spriteObject);
+  left.initialize
+  ({
+    Box2D: Box2D, world: world, shape: "edge", startX: 0, startY: 0, 
+		endX: 0, endY: canvas.height / SCALE, color: "rgba(255, 255, 255, 0)",
+	  bodyType: "static", density: 10, friction: 0.5, restitution: 0.4
+  });
+		
+	var right = Object.create(game.spriteObject);
+  right.initialize
+  ({
+    Box2D: Box2D, world: world, shape: "edge", startX: canvas.width / SCALE, startY: 0, 
+		endX: canvas.width / SCALE, endY: canvas.height / SCALE, color: "rgba(255, 255, 255, 0)",
+	  bodyType: "static", density: 10, friction: 0.5, restitution: 0.4
+  });
+}
+
+function createOtherObjects()
+{
+	//The catapult
+	var triangle =
+  [
+    new b2Vec2(0, -2),
+    new b2Vec2(1, 0),
+    new b2Vec2(-1, 0)
+  ];
+	
+		
+  pedestal = Object.create(game.spriteObject);
+  pedestal.initialize
+  ({
+	  Box2D: Box2D, world: world, shape: "polygon", x: 16, y: (canvas.height) / SCALE, vertices: triangle,
+	  width: SIZE / SCALE, height: (SIZE / 2) / SCALE, angle: 0,
+	  bodyType: "dynamic", density: 80, friction: 0.8, restitution: 0,
+	  sourceX: 256, sourceY: 192, sourceWidth: 64, sourceHeight: 32
+  });	
+	pedestal.body.SetFixedRotation(true);
+  
+  plank = Object.create(game.spriteObject);
+  plank.initialize
+  ({
+	  Box2D: Box2D, world: world, shape: "box", x: pedestal.body.GetWorldCenter().x, y: pedestal.body.GetWorldCenter().y - (SIZE + 6) / 2 / SCALE,
+	  width: 320 / SCALE, height: 8 / SCALE, angle: 0,
+	  bodyType: "dynamic", density: 80, friction: 0.8, restitution: 0.6,
+	  sourceX: 0, sourceY: 320, sourceWidth: 320, sourceHeight: 8
+  });
+	
+	//Create a hing between the pedestal and the box
+	var revoluteJointDef = new b2RevoluteJointDef();
+  revoluteJointDef.Initialize(pedestal.body, plank.body, plank.body.GetWorldCenter());
+	hinge = world.CreateJoint(revoluteJointDef);
+		
+	end = Object.create(game.spriteObject);
+  end.initialize
+  ({
+	  Box2D: Box2D, world: world, shape: "box", x: plank.body.GetWorldCenter().x - 5.5 + (8 / SCALE), y: plank.body.GetWorldCenter().y - (16 / SCALE),
+	  width: 8 / SCALE, height: 32 / SCALE, angle: 0,
+	  bodyType: "dynamic", density: 80, friction: 0.8, restitution: 0,
+	  sourceX: 256, sourceY: 256, sourceWidth: 8, sourceHeight: 32
+  });
+		
+	var weldJointDef = new b2WeldJointDef();
+  weldJointDef.Initialize(end.body, plank.body, plank.body.GetWorldCenter()); // (BodyA, BodyB, Anchor Point)
+  weldJointDef.referenceAngle = 0; // The bodyB angle minus bodyA angle in the reference state (radians).
+  weldJointDef.frequencyHz = 1.0; // The mass-spring-damper frequency in Hertz. Rotation only.
+  weldJointDef.dampingRatio = 0.5; // The damping ratio. 0 = no damping, 1 = critical damping.
+  var weldJoint = world.CreateJoint(weldJointDef);
+}
+
+function playGame()
+{  
+	//Resize canvas to match window				
+	//canvas.width  = window.innerWidth;
+  //canvas.height = window.innerHeight;
+		
+  //update the world: frame rate, velocity iterations, position iterations    
+  world.Step(1 / 60, 10, 10);
+  world.DrawDebugData();
+  world.ClearForces();	
+	world.SetContactListener(listener);
+	
+	//Get the mouse positions and convert them into world coordinates
+	var mouseX = game.mouseControl.mouseX() / SCALE;
+	
+	//cat.body.SetLinearVelocity().x = mouseX - cat.body.GetPosition().x * 0.2;
+	//Capture the cat's velocity
+	var velocity = cat.body.GetLinearVelocity();
+	var targetVelocity = 0;
+  //Make the cat go right
+	if(mouseX > cat.body.GetPosition().x + ((SIZE / 2) / SCALE))
+	{
+	  targetVelocity = Math.min(velocity.x + 1,  10.0);
+		cat.body.SetAwake(true);
+	}
+	//Make the cat go left
+	else if(mouseX < cat.body.GetPosition().x - ((SIZE / 2) / SCALE))
+	{
+		targetVelocity = Math.max(velocity.x - 1, -10.0);
+		cat.body.SetAwake(true);
+	}
+	//Make the cat stop if the mouse is centered over it
+	else
+	{
+	  targetVelocity = velocity.x * 0.9; 
+	  cat.body.SetAwake(true); 
+	}
+	var changedVelocity = targetVelocity - velocity.x;
+	var impulse = cat.body.GetMass() * changedVelocity;
+	cat.body.ApplyImpulse(new b2Vec2(impulse, 0), cat.body.GetWorldCenter());
+	
+	//Make the cat jump (requires the contact listener above)
+	var mouseIsDown = game.mouseControl.mouseIsDown();
+	
+	if(mouseIsDown && footContacts > 0 && jumpTimeout < 0)
+	{ 
+		//cat.body.ApplyImpulse(new b2Vec2(Math.cos(launchAngle) * power, Math.sin(launchAngle) * power), cat.body.GetWorldPoint(new b2Vec2(0, 0)));
+	  var impulse = cat.body.GetMass() * -18;
+    cat.body.ApplyImpulse(new b2Vec2(0, impulse), cat.body.GetWorldCenter());
+		jumpTimeout = 15;
+	}
+	jumpTimeout--;
+  
+}
+
+function render()
+{		
+	context.clearRect(0, 0, canvas.width, canvas.height);
+		
+  //Display the background image sprites
+  if(scenerySprites.length !== 0)
+  { 
+    for(var i = 0; i < scenerySprites.length; i++)
+    {
+      var sprite = scenerySprites[i];
+      if(sprite.visible)
+      { 
+        context.drawImage
+        (
+          image, 
+          sprite.sourceX, sprite.sourceY, 
+          sprite.sourceWidth, sprite.sourceHeight,
+          Math.floor(sprite.x), Math.floor(sprite.y), 
+          sprite.width, sprite.height
+        ); 
+      }
+    }
+  }
+	
+  //Loop through all the bodies in the world
+  for(var body = world.GetBodyList(); body; body = body.GetNext())
+  {
+		//Make sure its userData has been set
+		if(body.GetUserData() !== null)
+		{
+					
+			//Get a reference to the current sprite
+			var sprite = body.GetUserData();
+			
+			//This type of sprite will only have one fixture, and it will be centered over the body.
+			//Let's reference it and find its height and width
+			var fixture = body.GetFixtureList();
+					
+		  context.save();
+			
+      //Rotate the canvas
+			//Important: use GetWorldCenter which tells you the the point where a
+			//shape's vertices converge. This is different from GetPosition which 
+			//tells you the center of mass.
+			context.translate
+			(						
+				body.GetPosition().x * SCALE, 
+				body.GetPosition().y * SCALE
+			);
+					
+			context.rotate(body.GetAngle());
+			
+			
+			//Draw the sprite using canvas drawing API if no sprite image has been defined
+			switch(sprite.shape)
+			{ 			
+				case "polygon":
+					if(sprite.sourceX === undefined)
+					{
+					  //Draw the polygon's vertices onto the canvas
+						context.fillStyle = sprite.color;
+						context.beginPath();
+						context.strokeStyle = sprite.color;
+							
+						var startX = fixture.GetShape().GetVertices()[0].x;
+						var startY = fixture.GetShape().GetVertices()[0].y;
+						context.moveTo(startX * SCALE, startY * SCALE);
+							
+						for(var i = 1; i < fixture.GetShape().GetVertexCount(); i++)
+						{
+							var nextX = fixture.GetShape().GetVertices()[i].x;
+							var nextY = fixture.GetShape().GetVertices()[i].y;
+							context.lineTo(nextX * SCALE, nextY * SCALE);
+						}
+						context.closePath();
+						context.stroke();
+						context.fill();
+					
+					}
+					
+					//Note: Mapping images onto polygons is tricky and may require custom
+					//positioning for each polygon shape. Possibly extend the spriteObject to do this.
+					else
+					{		
+						/*	
+						context.drawImage
+						(
+							image, 
+							sprite.sourceX, sprite.sourceY, 
+							sprite.sourceWidth, sprite.sourceHeight,
+							(-sprite.sourceWidth), (-sprite.sourceHeight), 
+							sprite.polygonWidth * SCALE, sprite.polygonHeight * SCALE
+						);	
+            */
+						
+						context.drawImage
+						(
+							image, 
+							sprite.sourceX, sprite.sourceY, 
+							sprite.sourceWidth, sprite.sourceHeight,
+							//Note: - sprite.polygonHeight might have to be divided by 2
+							(-sprite.polygonWidth / 2) * SCALE, (-sprite.polygonHeight) * SCALE, 
+							/*
+							-sprite.sourceWidth / 2, -sprite.sourceHeight / 2,
+              */
+							sprite.polygonWidth * SCALE, sprite.polygonHeight * SCALE
+							
+						);
+            
+            
+						//Optional: Use the polygon as a mask for an image pattern
+						//Draw the polygon's vertices onto the canvas
+						/*
+						context.fillStyle = sprite.color;
+						context.beginPath();
+						context.strokeStyle = sprite.color;
+							
+						var startX = fixture.GetShape().GetVertices()[0].x;
+						var startY = fixture.GetShape().GetVertices()[0].y;
+						context.moveTo(startX * SCALE, startY * SCALE);
+							
+						for(var i = 1; i < fixture.GetShape().GetVertexCount(); i++)
+						{
+							var nextX = fixture.GetShape().GetVertices()[i].x;
+							var nextY = fixture.GetShape().GetVertices()[i].y;
+							context.lineTo(nextX * SCALE, nextY * SCALE);
+						}
+						context.closePath();
+						
+						context.clip();
+						context.drawImage
+						(
+							image, 
+							sprite.sourceX, sprite.sourceY, 
+							sprite.sourceWidth, sprite.sourceHeight,
+							(-sprite.polygonWidth / 2 ) * SCALE, (-sprite.polygonHeight / 2) * SCALE, 
+							sprite.polygonWidth * SCALE, sprite.polygonHeight * SCALE
+						);
+            */
+							
+					}
+					break;
+					
+				case "edge":
+					//console.log(fixture.GetShape().GetVertexCount())
+					var startX = fixture.GetShape().GetVertices()[0].x;
+					var startY = fixture.GetShape().GetVertices()[0].y;
+					var endX = fixture.GetShape().GetVertices()[1].x;
+					var endY = fixture.GetShape().GetVertices()[1].y;
+					
+					context.strokeStyle = sprite.color;
+					context.beginPath();
+					context.moveTo(startX * SCALE, startY * SCALE);
+					context.lineTo(endX * SCALE, endY * SCALE);
+					context.stroke();
+					break;
+					
+				case "box":
+					var fixtureWidth = fixture.GetShape().GetVertices()[1].x - fixture.GetShape().GetVertices()[0].x;	
+					var fixtureHeight = fixture.GetShape().GetVertices()[2].y - fixture.GetShape().GetVertices()[1].y;
+				
+					if(sprite.sourceX === undefined)
+					{
+						context.fillStyle = sprite.color;
+						context.fillRect
+						(
+							(-fixtureWidth / 2) * SCALE, (-fixtureHeight / 2) * SCALE,
+							fixtureWidth * SCALE, fixtureHeight * SCALE
+						)
+					}
+				
+					//If the source image is defined, use it
+					else
+					{ 
+						context.drawImage
+						(
+							image, 
+							sprite.sourceX, sprite.sourceY, 
+							sprite.sourceWidth, sprite.sourceHeight,
+							(-fixtureWidth / 2) * SCALE, (-fixtureHeight / 2) * SCALE, 
+							fixtureWidth * SCALE, fixtureHeight * SCALE
+						);
+				  }
+				  break;
+							
+        case "jumpingObject":
+					var fixtureWidth = SIZE //fixture.GetShape().GetVertices()[1].x - fixture.GetShape().GetVertices()[0].x;	
+					var fixtureHeight = SIZE//fixture.GetShape().GetVertices()[2].y - fixture.GetShape().GetVertices()[1].y;
+				
+					if(sprite.sourceX === undefined)
+					{
+						context.fillStyle = sprite.color;
+						context.fillRect
+						(
+							(-fixtureWidth / 2), (-fixtureHeight / 2),
+							fixtureWidth, fixtureHeight
+						)
+					}
+				
+					//If the source image is defined, use it
+					else
+					{ 
+						context.drawImage
+						(
+							image, 
+							sprite.sourceX, sprite.sourceY, 
+							sprite.sourceWidth, sprite.sourceHeight,
+							(-fixtureWidth / 2), (-fixtureHeight / 2), 
+							fixtureWidth, fixtureHeight
+						);
+				  }
+				  break;					
+				case "circle":
+					var radius = fixture.GetShape().GetRadius();
+				  
+					if(sprite.sourceX === undefined)
+					{  
+					  context.beginPath();
+						context.arc
+					  (
+					    (-radius / 2) * SCALE, (-radius / 2) * SCALE, 
+					    radius * SCALE, 0, 2 * Math.PI, false
+					  );
+						context.fillStyle = sprite.color;
+						context.fill();
+					}
+				
+					//If the source image is defined, use it
+					else
+					{ 
+						context.drawImage
+						(
+							image, 
+							sprite.sourceX, sprite.sourceY, 
+							sprite.sourceWidth, sprite.sourceHeight,
+							(-radius) * SCALE, (-radius) * SCALE, 
+							(radius * 2) * SCALE, (radius * 2) * SCALE
+						);
+				  }
+			}
+			context.restore();
+    }
+  }
+}
+
+}());
+</script>
