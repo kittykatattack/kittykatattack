@@ -161,14 +161,12 @@ Optimized SAT (Separating Axis Theory) collision engine for games. Why it's cool
 Getting help [what?]
 ---------------------------
 
-If you're looking for help or information about HTML5 games, the best
+If you're looking for help with or information about HTML5 games, the best
 place to go is:
 
 * [HTML5 Game Devs](http://www.html5gamedevs.com)
 
-Visit the [Coding and Game Desing
-2D](http://www.html5gamedevs.com/forum/3-2d/) forum for general help with
-HTML5 games.
+Visit the [Coding and Game Desing 2D](http://www.html5gamedevs.com/forum/3-2d/) forum for general help with HTML5 games.
 
 If you have any specific questions about any of [the code in the books](#thefoundationandadvancedseries), or want help with your own game projects, go here:
 
