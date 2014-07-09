@@ -161,7 +161,16 @@ Optimized SAT (Separating Axis Theory) collision engine for games. Why it's cool
 Getting help [what?]
 ---------------------------
 
-If you have questions about any of [the code in the books](#thefoundationandadvancedseries), or want help with your own game projects, go here:
+If you're looking for help or information about HTML5 games, the best
+place to go is:
+
+* [HTML5 Game Devs](http://www.html5gamedevs.com)
+
+Visit the [Coding and Game Desing
+2D](http://www.html5gamedevs.com/forum/3-2d/) forum for general help with
+HTML5 games.
+
+If you have any specific questions about any of [the code in the books](#thefoundationandadvancedseries), or want help with your own game projects, go here:
 
 <http://gamedev.stackexchange.com/>
 
@@ -186,7 +195,7 @@ If you want stay in touch with new developments in these fields, and see what ot
 * [New HTML5/JavaScript game design questions](http://gamedev.stackexchange.com/questions/tagged/html5+javascript)
 * [New Flash/AS3.0 game design questions](http://gamedev.stackexchange.com/questions/tagged/flash+actionscript-3)
 
-Bookmark them, and I'll see you there!
+Bookmark these links, and I'll see you there!
 
 kittykatawhat? [what?]
 ---------------------------
@@ -200,6 +209,12 @@ Read them, and make wonderful games!
 Why does kittykatattack.com not look like other websites? That's because it's based on new ideas about *[website design minimalism](http://kittykatattack.github.io/thepoetrybook)*. How much stuff can you take out of a website and still have a website? How little technology can you use? The entire website is generated from easy-to-write markdown documents and uses JavaScript to magically self-organize the content.
 
 Kittykatattack.com is completely free, entirely non-commercial, open for anyone to learn from, and made with love.
+
+*"Those who have learned to walk on the threshold of the unknown
+worlds ... may then with the fair while wings of Imagination hope to
+soar futher into the unexplored amidst which we live."*
+- Ada Byron, the world's computer programmer, from an essay she wrote
+  in 1841.
 
 
 <a class="googlePlusLink" rel="author" href="https://plus.google.com/u/0/117683289179923128627?rel=author">GooglePlus</a>
