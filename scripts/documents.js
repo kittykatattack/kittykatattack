@@ -2,9 +2,9 @@ var POETRYBOOK = POETRYBOOK || {};
 
 POETRYBOOK.documents = (function () {
   return [
-   "../documents/book.markdown", 
-   "../documents/git.markdown", 
-   "../documents/propertyObserver.markdown",
-    "../documents/storyMaker.markdown"
+   "http://kittykatattack.github.io/kittykatattack/documents/book.markdown", 
+   "http://kittykatattack.github.io/kittykatattack/documents/git.markdown", 
+   "http://kittykatattack.github.io/kittykatattack/documents/propertyObserver.markdown",
+   "http://kittykatattack.github.io/kittykatattack/documents/storyMaker.markdown"
   ];
 }());
