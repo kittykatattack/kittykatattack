@@ -52,51 +52,6 @@ This is a first-edition, which has now been replaced by the much more up-to-date
 * [Source code, CS4](http://www.kittykatattack.com/source/978-1-4302-1821-0.zip)
 * [Source code, CS3](http://www.kittykatattack.com/source/978-1-4302-1821-0-CS3version.zip)
 
-Hello World! for HTML5 games [interesting]
-------------------------------------------
-
-[![](images/gameSetup.jpg)](downloads/gameSetup.zip)
-
-I had a few moments free this weekend, so I put together some basic setup files for HTML5/JavaScript games. You can [download them here](downloads/gameSetup.zip). The code creates two sprites from a tile sheet, lets you control those sprites with the mouse, keyboard, or touch, implements simple collision detection, displays dynamic text using an embedded font, and plays some music using the WebAudio API. These are the most basic things you'll probably want most of your games to do, so it's useful to have all these techniques together in one reference file. If you're familiar with the book Foundation Game Design with HTML5 and JavaScript, you'll recognize all of these techniques.
-You'll find three versions of this code - one for mouse control, one for keyboard control, and one for touch control. Rip them apart and rebuild them at your pleasure :)
-But there is one completely new technique here: sound is handled using the WebAudio API. When the Foundation book was written, the WebAudio API didn't really work, and, even in mid-2013, it's only just - barely - working in the latest browsers. Still, we've crossed the threshold, and WebAudio has now delivered on its promise of being future of sound in HTML5 games. You can now forget about having to use the HTML audio tag for good.
-Still, WebAudio is a lot of work to implement. Before you can use it, you have to abstract and create the core functions that you need for game sounds: play, stop, resume, volume, pan, and a way to manage loading the sound. So to help us all out, I created a custom soundObject that does all this, without having to mess around directly with the hornets-nest-that-is-the-WebAudio API. 
-Here's how it works. Create a new soundObject like this:
-
-<pre class="prettyprint">
-var musicSound = Object.create(soundObject);
-musicSound.initialize
-({
-	source: "../sounds/music.wav", 
-	volume: 1, 
-	pan: 0, 
-	loop: true, 
-	singleInstance: true,
-	loadHandler: function(){return loadHandler();}
-});
-assetsToLoad.push(musicSound);
-</pre>
-
-This creates a new soundObject called musicSound. It's like a sprite for sounds instead of images. Use these functions to play, stop and resume the sound:
-
-<pre class="prettyprint">
-musicSound.play();
-musicSound.stop();
-musicSound.resume();
-</pre>
-
-The volume property is any value between 0 (silent) and 1 (full volume). The pan property is a value between -1 (full pan to left speaker) and 1 (full pan to right speaker.) A pan value of 0 means the sound is equal in both speakers. You can change the volume and pan in your sound object at any time after your create it like this:
-
-<pre class="prettyprint">
-shootSound.setVolume(0.5);
-shootSound.setPan(-1);
-</pre>
-
-This sets the volume level to half (0.5) and pans the sound all the way to the left speaker (-1).
-
-If you want more than one instance of the sound to play simultaneously, set the singleInstance property to false when you create the sound. Set loop to false if you only want the sound to play once. The loadHandler property is optional, but lets you call a function in your main code that should run when the sound has finished loading. In this case, it calls a function called loadHandler that manages the loading of all the game assets (images and sounds) so that the game only starts after they've all loaded.
-
-I've kept the soundObject extremely simple and as sparse as possible. I really just made it for my own interest and little game projects and experiments. It's not backward compatible with anything, has no fallbacks, and does nothing else except what it does. But, it works, and it's probably all I'll ever need for controlling sounds in games. Hopefully, it's also very understandable. So, keep an eye on it, and please customize and improve as much as you like for whatever you need your game sounds to do. It will work with all the latest browsers - but if you're using a pre-Mavericks version of Safari, you'll need to change the start() method in the SoundObject to noteOn(). (In the latest version of the WebAudio spec, start() is now standard, and noteOn() has been deprecated.) You'll also find a simple polyfill in the source files that adds the correct vendor prefix to the AudioContext. If you need a more flexible (but more complex) system for using WebAudio sound in games, try out [howler.js](https://github.com/goldfire/howler.js).
 
 A better A-Star for AS3.0 [interesting]
 ---------------------------------------
