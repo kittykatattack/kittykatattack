@@ -210,11 +210,11 @@ Why does kittykatattack.com not look like other websites? That's because it's ba
 
 Kittykatattack.com is completely free, entirely non-commercial, open for anyone to learn from, and made with love.
 
->"Those who have learned to walk on the threshold of the unknown
+>*"Those who have learned to walk on the threshold of the unknown
 >worlds ... may then with the fair white wings of Imagination hope to
->soar further into the unexplored amidst which we live."
+>soar further into the unexplored amidst which we live."*
 
-- Ada Byron, the world's computer programmer, from an essay she wrote
+-Ada Byron, the world's computer programmer, from an essay she wrote
   in 1841.
 
 
