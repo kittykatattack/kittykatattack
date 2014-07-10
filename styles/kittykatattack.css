@@ -222,6 +222,7 @@ article nav
   display: none;
 }
 */
+  /*
  .section1 nav {
   background-color: #2E2E2E;
   width: 12%;
@@ -248,6 +249,12 @@ article nav
   -webkit-backface-visibility: hidden;
 }
 .section1 nav:hover {
+  left: 23%;
+  opacity: 1;
+}
+*/
+
+.section1 nav{
   left: 23%;
   opacity: 1;
 }
