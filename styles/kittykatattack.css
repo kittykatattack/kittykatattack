@@ -222,7 +222,6 @@ article nav
   display: none;
 }
 */
-  /*
  .section1 nav {
   background-color: #2E2E2E;
   width: 12%;
@@ -252,12 +251,7 @@ article nav
   left: 23%;
   opacity: 1;
 }
-*/
 
-.section1 nav{
-  left: 23%;
-  opacity: 1;
-}
 .section1 nav a {
   display: block;
   padding-bottom: 0.7em;
