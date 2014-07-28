@@ -86,7 +86,13 @@ Gallery [games]
 
 ### The game engine gallery
 
-If you've read the Foundation and AdvancED series of books about how to make video games, you'll recognize many of these examples. Those books explain how to make all of these demos in detail, as well as dozens of other games. These aren't fully developed games; they're _game engines_. A game engine is a complete working model of all the technical features you need to create a complete game using that model. With a working game engine, there's no limit to the kinds of games you can make. 
+If you've read the Foundation and AdvancED series of books about how
+to make video games, you'll recognize many of these examples. Those
+books explain how to make all of these demos in detail, as well as
+dozens of other games. These aren't fully developed games; they're
+_game prototypes_. A game prototype is a complete working model of all
+the technical features you need to create a complete game using that
+model. With a working game prototype, there's no limit to the kinds of games you can make. 
 
 Most of these demos will require the latest versions of [Chrome](http://www.google.com/chrome), [Safari](http://www.apple.com/safari), or [Firefox](http://www.mozilla.org/en-US/firefox/new/) and the [Flash Player](http://www.adobe.com/support/flashplayer/downloads.html).
 
