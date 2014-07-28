@@ -4,6 +4,7 @@ POETRYBOOK.documents = (function () {
   return [
    "../documents/book.markdown", 
    "../documents/git.markdown", 
-   "../documents/storyMaker.markdown"
+   "../documents/storyMaker.markdown",
+   "https://rawgit.com/kittykatattack/ga/master/README.md"
   ];
 }());
