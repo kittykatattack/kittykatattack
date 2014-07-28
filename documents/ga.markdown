@@ -7,24 +7,15 @@
 *- A baby's exclamation of surprise.*
 
 Ga is a minimalist game engine for making HTML5 games or any other
-kind interactive media. 
+kind interactive media. You can get it here: 
 
 [Ga game enigne](https://github.com/kittykatattack/ga)
 
-Its design was inspired by the [js13k game
-competition](http://js13kgames.com) where contestants are required to make a
-game with a total file of size no more than 13k. 
+Its design was inspired by the [js13k gamecompetition](http://js13kgames.com) where contestants are required to make a game with a total file of size no more than 13k. 
 
 How can you make a game with such a small file size?
 
-It's a useful to use a game engine, because starting any game first
-requires writing a lot of tedious boilerplate code. You don't' want to
-have to re-write all that stuff for every game you make. But most full-featured HTML5
-game engines, even small and fast ones like
-[Phaser](https://github.com/photonstorm/phaser), are still at least 1
-Megabyte-ish in size. The goal for Ga was to design a full-featured,
-fun-to-use 2D game engine with a
-compressed file size of no more than 6.5k. 
+It's a useful to use a game engine, because starting any game first requires writing a lot of tedious boilerplate code. You don't' want to have to re-write all that stuff for every game you make. But most full-featured HTML5 game engines, even small and fast ones like [Phaser](https://github.com/photonstorm/phaser), are still at least 1 Megabyte-ish in size. The goal for Ga was to design a full-featured, fun-to-use 2D game engine with a compressed file size of no more than 6.5k. 
 
 6.5k?
 
