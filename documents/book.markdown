@@ -84,7 +84,7 @@ It now seems to work for all map types. Thanks Zhan!
 Gallery [games]
 ---------------
 
-### The game engine gallery
+### The game prototype gallery
 
 If you've read the Foundation and AdvancED series of books about how
 to make video games, you'll recognize many of these examples. Those
